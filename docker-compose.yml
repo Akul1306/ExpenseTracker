@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: expensetracker1
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: expensetrackerdb
+      MYSQL_USER: expensetracker
+      MYSQL_PASSWORD: root1234
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot1234"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./ExpenseTracker
+    container_name: expense-backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/expensetrackerdb
+      SPRING_DATASOURCE_USERNAME: expensetracker
+      SPRING_DATASOURCE_PASSWORD: root1234
+      APP_UPLOAD_DIR: /app/uploads
+    ports:
+      - "8080:8080"
+    volumes:
+      - expense_uploads:/app/uploads
+
+  frontend:
+    build: ./Frontend/ExpenseTracker_Frontend
+    container_name: expense-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  mysql_data:
+  expense_uploads:

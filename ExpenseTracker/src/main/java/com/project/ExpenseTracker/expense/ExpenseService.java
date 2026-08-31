@@ -92,11 +92,18 @@ public class ExpenseService {
             throw new AccessDeniedException("Not your expense");
         }
 
+        // Validation: filename must not contain spaces
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null && originalFilename.contains(" ")) {
+            expenseRepo.delete(expense); // Rollback expense creation
+            throw new IllegalArgumentException("File name should not contain spaces");
+        }
+
         try {
             String uploadDir = "uploads/receipts/";
             Files.createDirectories(Paths.get(uploadDir));
 
-            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            String filename = UUID.randomUUID() + "_" + originalFilename;
             Path filePath = Paths.get(uploadDir + filename);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
@@ -105,7 +112,8 @@ public class ExpenseService {
             expenseRepo.save(expense);
 
             return fileUrl;
-        } catch (IOException e) {
+        } catch (Exception e) {
+            expenseRepo.delete(expense); // Rollback expense creation if storage fails
             throw new RuntimeException("Failed to store file", e);
         }
     }
@@ -132,11 +140,23 @@ public class ExpenseService {
         Long userId = getCurrentUserId();
         if (!expenseRepo.existsById(id)) {
             throw new ResourceNotFoundException("Expense not found");
-                    }
+        }
 
         expenseRepo.deleteById(id);
 
         return id;
     }
 
+    public List<ExpenseResponse> getAllExpensesForAdmin() {
+        List<Expense> expenses = expenseRepo.findAll();
+        return expenses.stream().map(this::mapToResponse).toList();
+    }
+
+    public ExpenseResponse updateExpenseStatus(Long id, ExpenseStatus status) {
+        Expense expense = expenseRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
+        expense.setStatus(status);
+        expense.setUpdatedAt(new Date());
+        return mapToResponse(expenseRepo.save(expense));
+    }
 }

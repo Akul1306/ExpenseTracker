@@ -25,12 +25,11 @@ public class ExpenseController {
     @PostMapping("/")
     public ResponseEntity<?> addExpense(@Valid @RequestBody ExpenseRequest req) {
         try {
-            expenseService.addExpense(req);
-            return ResponseEntity.ok().build();
+            Expense expense = expenseService.addExpense(req);
+            return ResponseEntity.ok(Map.of("id", expense.getId()));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).body(e.getMessage());
         }
-
     }
 
     @GetMapping("/category/{category}")
@@ -58,5 +57,16 @@ public class ExpenseController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteExpenseById(@PathVariable Long id) throws AccessDeniedException{
         return ResponseEntity.ok(expenseService.deleteExpenseById(id));
+    }
+
+    @GetMapping("/admin/all")
+    public ResponseEntity<List<ExpenseResponse>> getAllExpensesForAdmin() {
+        return ResponseEntity.ok(expenseService.getAllExpensesForAdmin());
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ExpenseResponse> updateExpenseStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        ExpenseStatus status = ExpenseStatus.valueOf(body.get("status"));
+        return ResponseEntity.ok(expenseService.updateExpenseStatus(id, status));
     }
 }
