@@ -14,7 +14,7 @@ function parseJwt(token) {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (e) {
@@ -72,11 +72,7 @@ function App() {
         />
         <main className="flex-grow py-8 bg-slate-50">
           {/* Strict Protected Route Rendering based on User Role */}
-          {userInfo.role === "ADMIN" ? (
-            <AdminDashboard />
-          ) : (
-            <ExpenseForm />
-          )}
+          {userInfo.role === "ADMIN" ? <AdminDashboard /> : <ExpenseForm />}
         </main>
       </div>
     );
