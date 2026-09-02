@@ -166,7 +166,7 @@ export default function ExpenseForm() {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-xl shadow-md text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            👤 Employee Expense Portal
+            Employee Expense Portal
           </h1>
           <p className="text-blue-100 text-sm mt-1">
             Submit new expense claims and track your reimbursement approvals.
@@ -177,7 +177,7 @@ export default function ExpenseForm() {
             My Total Claimed
           </div>
           <div className="text-xl font-extrabold text-white">
-            ₹{totalAmount.toFixed(2)}
+            ₹{approvedTotal.toFixed(2)}
           </div>
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function ExpenseForm() {
       {/* Add Expense Section */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
         <h2 className="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
-          ➕ Submit New Expense Claim
+          Submit New Expense Claim
         </h2>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm">

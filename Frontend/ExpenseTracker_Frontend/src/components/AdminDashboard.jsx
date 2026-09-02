@@ -19,7 +19,9 @@ export default function AdminDashboard() {
       setExpenses(response.data);
     } catch (err) {
       console.error("Failed to fetch admin expenses:", err);
-      setError("Failed to fetch admin records. Ensure your backend is running.");
+      setError(
+        "Failed to fetch admin records. Ensure your backend is running.",
+      );
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,7 @@ export default function AdminDashboard() {
 
   // Get unique employee usernames for dropdown
   const uniqueEmployees = Array.from(
-    new Set(expenses.map((e) => e.username).filter(Boolean))
+    new Set(expenses.map((e) => e.username).filter(Boolean)),
   );
 
   // Filtered expense records
@@ -57,15 +59,22 @@ export default function AdminDashboard() {
     // Date filter (compare YYYY-MM-DD)
     if (selectedDate) {
       if (!item.expenseDate) return false;
-      const itemDateStr = new Date(item.expenseDate).toISOString().split("T")[0];
+      const itemDateStr = new Date(item.expenseDate)
+        .toISOString()
+        .split("T")[0];
       if (itemDateStr !== selectedDate) return false;
     }
     return true;
   });
 
   // Calculate summary metrics
-  const totalSpend = filteredExpenses.reduce((sum, item) => sum + item.amount, 0);
-  const pendingCount = filteredExpenses.filter((item) => item.status === "PENDING").length;
+  const totalSpend = filteredExpenses.reduce(
+    (sum, item) => sum + item.amount,
+    0,
+  );
+  const pendingCount = filteredExpenses.filter(
+    (item) => item.status === "PENDING",
+  ).length;
   const approvedTotal = filteredExpenses
     .filter((item) => item.status === "APPROVED")
     .reduce((sum, item) => sum + item.amount, 0);
@@ -87,17 +96,18 @@ export default function AdminDashboard() {
       <div className="bg-gradient-to-r from-slate-800 to-indigo-900 p-6 rounded-xl shadow-lg text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            🛡️ Admin Expense Control Dashboard
+            Admin Expense Control Dashboard
           </h1>
           <p className="text-slate-300 text-sm mt-1">
-            Review, filter, and manage all employee expense submissions across the organization.
+            Review, filter, and manage all employee expense submissions across
+            the organization.
           </p>
         </div>
         <button
           onClick={fetchAllExpenses}
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-sm transition shadow"
         >
-          🔄 Refresh Records
+          Refresh Records
         </button>
       </div>
 
@@ -270,7 +280,9 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                         <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">
-                          {expense.username ? expense.username.charAt(0).toUpperCase() : "U"}
+                          {expense.username
+                            ? expense.username.charAt(0).toUpperCase()
+                            : "U"}
                         </span>
                         {expense.username || "Unknown"}
                       </div>
@@ -315,7 +327,7 @@ export default function AdminDashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${getStatusBadgeClass(
-                          expense.status
+                          expense.status,
                         )}`}
                       >
                         {expense.status}
@@ -325,13 +337,17 @@ export default function AdminDashboard() {
                       {expense.status === "PENDING" ? (
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleStatusUpdate(expense.id, "APPROVED")}
+                            onClick={() =>
+                              handleStatusUpdate(expense.id, "APPROVED")
+                            }
                             className="px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded transition shadow-sm"
                           >
                             ✓ Approve
                           </button>
                           <button
-                            onClick={() => handleStatusUpdate(expense.id, "REJECTED")}
+                            onClick={() =>
+                              handleStatusUpdate(expense.id, "REJECTED")
+                            }
                             className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition shadow-sm"
                           >
                             ✕ Reject
@@ -339,7 +355,9 @@ export default function AdminDashboard() {
                         </div>
                       ) : (
                         <span className="text-xs text-slate-400">
-                          {expense.status === "APPROVED" ? "Approved" : "Rejected"}
+                          {expense.status === "APPROVED"
+                            ? "Approved"
+                            : "Rejected"}
                         </span>
                       )}
                     </td>
