@@ -8,6 +8,10 @@ import com.project.ExpenseTracker.user.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -158,5 +162,12 @@ public class ExpenseService {
         expense.setStatus(status);
         expense.setUpdatedAt(new Date());
         return mapToResponse(expenseRepo.save(expense));
+    }
+
+    public Page<ExpenseResponse> getAllExpenses(int page, int size) {
+        Long userId = getCurrentUserId();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("expenseDate").descending());
+        Page<Expense> expensePage = expenseRepo.findByUserId(userId, pageable);
+        return expensePage.map(this::mapToResponse);
     }
 }

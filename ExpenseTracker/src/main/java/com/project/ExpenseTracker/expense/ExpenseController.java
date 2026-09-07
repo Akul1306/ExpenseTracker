@@ -4,6 +4,7 @@ import com.project.ExpenseTracker.expense.dto.ExpenseRequest;
 import com.project.ExpenseTracker.expense.dto.ExpenseResponse;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +23,7 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<?> addExpense(@Valid @RequestBody ExpenseRequest req) {
         try {
             Expense expense = expenseService.addExpense(req);
@@ -68,5 +69,12 @@ public class ExpenseController {
     public ResponseEntity<ExpenseResponse> updateExpenseStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
         ExpenseStatus status = ExpenseStatus.valueOf(body.get("status"));
         return ResponseEntity.ok(expenseService.updateExpenseStatus(id, status));
+    }
+
+    @GetMapping("/expense")
+    public ResponseEntity<Page<ExpenseResponse>> getAllExpenses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(expenseService.getAllExpenses(page, size));
     }
 }
