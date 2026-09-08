@@ -13,6 +13,9 @@ export default function AdminDashboard() {
 
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
+
   const fetchAllExpenses = async () => {
     setLoading(true);
     setError("");
@@ -46,6 +49,9 @@ export default function AdminDashboard() {
   // Get unique employee usernames for dropdown
   const uniqueEmployees = Array.from(
     new Set(expenses.map((e) => e.username).filter(Boolean)),
+  );
+  const filteredEmployees = uniqueEmployees.filter((username) =>
+    username.toLowerCase().includes(employeeSearch.toLowerCase()),
   );
 
   // Filtered expense records
@@ -178,24 +184,55 @@ export default function AdminDashboard() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Employee Filter */}
-          <div>
+          <div className="relative">
             <label className="block text-slate-700 text-sm font-semibold mb-1">
               Employee-wise Filter
             </label>
-            <select
-              value={selectedEmployee}
-              onChange={(e) => setSelectedEmployee(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-            >
-              <option value="ALL">All Employees</option>
-              {uniqueEmployees.map((emp) => (
-                <option key={emp} value={emp}>
-                  👤 {emp}
-                </option>
-              ))}
-            </select>
-          </div>
 
+            <input
+              type="text"
+              value={employeeSearch}
+              onChange={(e) => {
+                const value = e.target.value;
+
+                setEmployeeSearch(value);
+                setShowEmployeeDropdown(true);
+
+                if (value === "") {
+                  setSelectedEmployee("ALL");
+                }
+              }}
+              onFocus={() => setShowEmployeeDropdown(true)}
+              placeholder="Type employee name..."
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            />
+
+            {showEmployeeDropdown && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {filteredEmployees.length > 0 ? (
+                  filteredEmployees.map((username) => (
+                    <button
+                      key={username}
+                      type="button"
+                      onClick={() => {
+                        setSelectedEmployee(username);
+                        setEmployeeSearch(username);
+                        setShowEmployeeDropdown(false);
+                        setCurrentPage(1);
+                      }}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-indigo-50"
+                    >
+                      👤 {username}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-3 text-sm text-slate-500 text-center">
+                    No employees found
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {/* Category Filter */}
           <div>
             <label className="block text-slate-700 text-sm font-semibold mb-1">
