@@ -11,6 +11,8 @@ export default function AdminDashboard() {
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedDate, setSelectedDate] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const fetchAllExpenses = async () => {
     setLoading(true);
     setError("");
@@ -66,6 +68,22 @@ export default function AdminDashboard() {
     }
     return true;
   });
+
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+
+  const currentExpenses = filteredExpenses.slice(
+    startIndex,
+    startIndex + itemsPerPage,
+  );
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Calculate summary metrics
   const totalSpend = filteredExpenses.reduce(
@@ -206,6 +224,7 @@ export default function AdminDashboard() {
             <div className="flex gap-2">
               <input
                 type="date"
+                readOnly
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
@@ -231,7 +250,9 @@ export default function AdminDashboard() {
             All Expense Claims
           </h2>
           <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-            Showing {filteredExpenses.length} entries
+            Showing {startIndex + 1}-
+            {Math.min(startIndex + itemsPerPage, filteredExpenses.length)} of{" "}
+            {filteredExpenses.length} entries
           </span>
         </div>
 
@@ -275,7 +296,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
-                {filteredExpenses.map((expense) => (
+                {currentExpenses.map((expense) => (
                   <tr key={expense.id} className="hover:bg-slate-50 transition">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
@@ -365,6 +386,31 @@ export default function AdminDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {/* Pagination */}
+        {filteredExpenses.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
+            <button
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Previous
+            </button>
+
+            <div className="text-sm text-slate-600">
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>

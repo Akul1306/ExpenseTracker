@@ -6,6 +6,8 @@ export default function ManageEmployees() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const fetchUsers = async () => {
     setLoading(true);
     setError("");
@@ -45,6 +47,25 @@ export default function ManageEmployees() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+
+  const sortedUsers = [...users].sort((a, b) =>
+    a.username.localeCompare(b.username, undefined, {
+      sensitivity: "base",
+    }),
+  );
+
+  const currentUsers = sortedUsers.slice(startIndex, startIndex + itemsPerPage);
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -117,7 +138,7 @@ export default function ManageEmployees() {
               </thead>
 
               <tbody className="bg-white divide-y divide-slate-200">
-                {users.map((user) => (
+                {currentUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 transition">
                     {/* ID */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
@@ -181,6 +202,30 @@ export default function ManageEmployees() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {users.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
+            <button
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Previous
+            </button>
+
+            <div className="text-sm text-slate-600">
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>

@@ -13,7 +13,13 @@ export default function ExpenseForm() {
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const fileInputRef = useRef(null);
+  const [maxDate] = useState(() => {
+    const today = new Date();
+    today.setDate(today.getDate() - 1);
+    return today.toISOString().split("T")[0];
+  });
 
   const fetchExpenses = async () => {
     try {
@@ -27,6 +33,19 @@ export default function ExpenseForm() {
   useEffect(() => {
     fetchExpenses();
   }, []);
+
+  const itemsPerPage = 3;
+
+  const totalPages = Math.ceil(expenses.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+
+  const currentExpenses = expenses.slice(startIndex, startIndex + itemsPerPage);
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -72,7 +91,7 @@ export default function ExpenseForm() {
 
     try {
       // 1. Create the expense
-      const response = await api.post("/expense/", payload);
+      const response = await api.post("/expense", payload);
       const createdExpenseId = response.data?.id;
 
       // 2. Upload receipt if file is selected
@@ -248,15 +267,19 @@ export default function ExpenseForm() {
               <option value="OTHER">Other</option>
             </select>
           </div>
+
           <div>
             <label className="block text-slate-700 text-sm font-semibold mb-1">
               Date
             </label>
+
             <input
               type="date"
               name="date"
               value={formData.date}
               onChange={handleChange}
+              onKeyDown={(e) => e.preventDefault()}
+              max={maxDate}
               required
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -380,7 +403,7 @@ export default function ExpenseForm() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
-                {expenses.map((expense) => (
+                {currentExpenses.map((expense) => (
                   <tr key={expense.id} className="hover:bg-slate-50 transition">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-slate-900">
@@ -462,6 +485,31 @@ export default function ExpenseForm() {
                 </tr>
               </tfoot>
             </table>
+          </div>
+        )}
+        {/* Pagination */}
+        {expenses.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
+            <button
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Previous
+            </button>
+
+            <div className="text-sm text-slate-600">
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next →
+            </button>
           </div>
         )}
       </div>
