@@ -14,6 +14,8 @@ export default function ExpenseForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const fileInputRef = useRef(null);
   const [maxDate] = useState(() => {
     const today = new Date();
@@ -21,10 +23,19 @@ export default function ExpenseForm() {
     return today.toISOString().split("T")[0];
   });
 
+  const itemsPerPage = 3;
+
   const fetchExpenses = async () => {
     try {
-      const response = await api.get("/expense");
-      setExpenses(response.data);
+      const response = await api.get(
+        `/expense?page=${currentPage - 1}&size=${itemsPerPage}`,
+      );
+
+      console.log("API response:", response.data);
+
+      setExpenses(response.data.content);
+      setTotalPages(response.data.totalPages);
+      setTotalElements(response.data.totalElements);
     } catch (err) {
       console.error("Failed to fetch expenses:", err);
     }
@@ -32,15 +43,8 @@ export default function ExpenseForm() {
 
   useEffect(() => {
     fetchExpenses();
-  }, []);
+  }, [currentPage]);
 
-  const itemsPerPage = 3;
-
-  const totalPages = Math.ceil(expenses.length / itemsPerPage);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-
-  const currentExpenses = expenses.slice(startIndex, startIndex + itemsPerPage);
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -366,7 +370,7 @@ export default function ExpenseForm() {
             Your Expense Claims
           </h2>
           <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-            {expenses.length} Total Submissions
+            {totalElements} Total Submissions
           </span>
         </div>
 
@@ -403,7 +407,7 @@ export default function ExpenseForm() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
-                {currentExpenses.map((expense) => (
+                {expenses.map((expense) => (
                   <tr key={expense.id} className="hover:bg-slate-50 transition">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-slate-900">
@@ -491,24 +495,21 @@ export default function ExpenseForm() {
         {expenses.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
             <button
-              onClick={() => setCurrentPage((prev) => prev - 1)}
               disabled={currentPage === 1}
-              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setCurrentPage(currentPage - 1)}
             >
-              ← Previous
+              Previous
             </button>
 
-            <div className="text-sm text-slate-600">
-              Page <span className="font-semibold">{currentPage}</span> of{" "}
-              <span className="font-semibold">{totalPages}</span>
-            </div>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
 
             <button
-              onClick={() => setCurrentPage((prev) => prev + 1)}
               disabled={currentPage === totalPages}
-              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setCurrentPage(currentPage + 1)}
             >
-              Next →
+              Next
             </button>
           </div>
         )}

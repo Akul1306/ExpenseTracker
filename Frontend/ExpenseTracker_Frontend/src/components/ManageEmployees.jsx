@@ -7,14 +7,22 @@ export default function ManageEmployees() {
   const [error, setError] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const itemsPerPage = 10;
 
   const fetchUsers = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await api.get("/user/");
-      setUsers(response.data);
+      const response = await api.get(
+        `/user/paginate?page=${currentPage - 1}&size=${itemsPerPage}`,
+      );
+
+      setUsers(response.data.content);
+      setTotalPages(response.data.totalPages);
+      setTotalElements(response.data.totalElements);
     } catch (err) {
       console.error("Failed to fetch users:", err);
       setError("Failed to fetch employees. Ensure your backend is running.");
@@ -46,26 +54,7 @@ export default function ManageEmployees() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  const itemsPerPage = 10;
-
-  const totalPages = Math.ceil(users.length / itemsPerPage);
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-
-  const sortedUsers = [...users].sort((a, b) =>
-    a.username.localeCompare(b.username, undefined, {
-      sensitivity: "base",
-    }),
-  );
-
-  const currentUsers = sortedUsers.slice(startIndex, startIndex + itemsPerPage);
-  useEffect(() => {
-    if (totalPages > 0 && currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  }, [currentPage]);
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -102,7 +91,7 @@ export default function ManageEmployees() {
           <div className="p-12 text-center text-slate-500 font-medium">
             Loading employees...
           </div>
-        ) : users.length === 0 ? (
+        ) : totalElements === 0 ? (
           <div className="p-12 text-center text-slate-500">
             No employees found.
           </div>
@@ -138,7 +127,7 @@ export default function ManageEmployees() {
               </thead>
 
               <tbody className="bg-white divide-y divide-slate-200">
-                {currentUsers.map((user) => (
+                {users.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 transition">
                     {/* ID */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
@@ -204,7 +193,7 @@ export default function ManageEmployees() {
             </table>
           </div>
         )}
-        {users.length > 0 && (
+        {totalElements > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200">
             <button
               onClick={() => setCurrentPage((prev) => prev - 1)}
