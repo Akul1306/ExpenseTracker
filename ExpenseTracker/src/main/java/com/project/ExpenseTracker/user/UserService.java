@@ -23,7 +23,7 @@ public class UserService {
         Pageable pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by("createdAt").descending()
+                Sort.by("username").ascending()
         );
 
         Page<User> userPage = userRepo.findAll(pageable);

@@ -178,6 +178,23 @@ public class ExpenseService {
         return expensePage.map(this::mapToResponse);
     }
 
+    //users all expenses
+    public Page<ExpenseResponse> getExpenses(int page, int size) {
+
+        Long userId = getCurrentUserId();
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("expenseDate").descending()
+        );
+
+        Page<Expense> expenses =
+                expenseRepo.findByUserId(userId, pageable);
+
+        return expenses.map(this::mapToResponse);
+    }
+
     @Transactional
     public ExpenseResponse updateExpense(Long id, ExpensePatchDto patch) throws AccessDeniedException {
         Expense expense = expenseRepo.findById(id)

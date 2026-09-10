@@ -52,8 +52,13 @@ public class ExpenseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ExpenseResponse>> getAllExpenses() {
-        return ResponseEntity.ok(expenseService.getAllExpenses());
+    public ResponseEntity<Page<ExpenseResponse>> getExpenses(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return ResponseEntity.ok(
+                expenseService.getExpenses(page, size)
+        );
     }
 
     @DeleteMapping("/{id}")
@@ -75,7 +80,7 @@ public class ExpenseController {
     @GetMapping("/expense")
     public ResponseEntity<Page<ExpenseResponse>> getAllExpenses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "3") int size) {
         return ResponseEntity.ok(expenseService.getAllExpenses(page, size));
     }
 
