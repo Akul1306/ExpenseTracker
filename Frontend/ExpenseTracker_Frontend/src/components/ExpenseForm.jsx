@@ -17,7 +17,7 @@ export default function ExpenseForm() {
   const fileInputRef = useRef(null);
   const [maxDate] = useState(() => {
     const today = new Date();
-    today.setDate(today.getDate() - 1);
+    today.setDate(today.getDate());
     return today.toISOString().split("T")[0];
   });
 
@@ -34,7 +34,7 @@ export default function ExpenseForm() {
     fetchExpenses();
   }, []);
 
-  const itemsPerPage = 3;
+  const itemsPerPage = 10;
 
   const totalPages = Math.ceil(expenses.length / itemsPerPage);
 
@@ -450,12 +450,14 @@ export default function ExpenseForm() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleDelete(expense.id)}
-                        className="text-red-600 hover:text-red-900 font-semibold"
-                      >
-                        Delete
-                      </button>
+                      {expense.status === "PENDING" && (
+                        <button
+                          onClick={() => handleDelete(expense.id)}
+                          className="text-red-600 hover:text-red-900 font-semibold"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
