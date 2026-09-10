@@ -1,12 +1,14 @@
 package com.project.ExpenseTracker.expense;
 
 import com.project.ExpenseTracker.exception.ResourceNotFoundException;
+import com.project.ExpenseTracker.expense.dto.ExpensePatchDto;
 import com.project.ExpenseTracker.expense.dto.ExpenseRequest;
 import com.project.ExpenseTracker.expense.dto.ExpenseResponse;
 import com.project.ExpenseTracker.user.User;
 import com.project.ExpenseTracker.user.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -165,9 +167,43 @@ public class ExpenseService {
     }
 
     public Page<ExpenseResponse> getAllExpenses(int page, int size) {
-        Long userId = getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size, Sort.by("expenseDate").descending());
-        Page<Expense> expensePage = expenseRepo.findByUserId(userId, pageable);
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("expenseDate").descending()
+        );
+
+        Page<Expense> expensePage = expenseRepo.findAll(pageable);
+
         return expensePage.map(this::mapToResponse);
+    }
+
+    @Transactional
+    public ExpenseResponse updateExpense(Long id, ExpensePatchDto patch) throws AccessDeniedException {
+        Expense expense = expenseRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
+
+        Long userId = getCurrentUserId();
+        if (!expense.getId().equals(userId)) {
+            throw new AccessDeniedException("Not your expense");
+        }
+
+        if (patch.getTitle() != null) {
+            expense.setTitle(patch.getTitle());
+        }
+        if (patch.getDescription() != null) {
+            expense.setDescription(patch.getDescription());
+        }
+        if (patch.getCategory() != null) {
+            expense.setCategory(patch.getCategory());
+        }
+        if (patch.getDate() != null) {
+            expense.setUpdatedAt(patch.getDate());
+        }
+        if (patch.getAmount() != null) {
+            expense.setAmount(patch.getAmount());
+        }
+
+        return mapToResponse(expenseRepo.save(expense));
     }
 }

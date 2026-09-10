@@ -19,7 +19,7 @@ public class ExpenseRequest {
     @NotNull(message = "Date is required")
     private Date date;
 
-    private double amount;
+    private Double amount;
 
     public String getDescription() {
         return description;

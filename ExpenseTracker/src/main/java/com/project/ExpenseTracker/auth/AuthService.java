@@ -1,5 +1,6 @@
 package com.project.ExpenseTracker.auth;
 
+import com.project.ExpenseTracker.auth.dto.ResetRequest;
 import com.project.ExpenseTracker.security.JwtService;
 import com.project.ExpenseTracker.user.Role;
 import com.project.ExpenseTracker.user.User;
@@ -14,6 +15,8 @@ import java.util.Date;
 public class AuthService {
 
     private final UserRepository userRepo;
+//    private final ResetRequest resetReq;
+
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
@@ -22,6 +25,7 @@ public class AuthService {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+
     }
 
     public void register(String username, String rawPassword,String email,Role role) {
@@ -47,4 +51,22 @@ public class AuthService {
 
         return jwtService.generateToken(user,user.getRole());
     }
+
+//    public void resetPassword(ResetRequest req) {
+//
+//        PasswordResetToken resetToken = tokenRepo.findByToken(req.getToken())
+//                .orElseThrow(() ->
+//                        new RuntimeException("Invalid reset token"));
+//
+//        User user = resetToken.getUser();
+//
+//        String encodedPassword =
+//                passwordEncoder.encode(req.getNewPassword());
+//
+//        user.setPassword(encodedPassword);
+//
+//        userRepo.save(user);
+//
+//        tokenRepo.delete(resetToken);
+//    }
 }

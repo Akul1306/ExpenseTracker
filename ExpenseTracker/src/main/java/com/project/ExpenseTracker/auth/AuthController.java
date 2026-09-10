@@ -41,4 +41,11 @@ public class AuthController {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
     }
+
+//    @PostMapping("/reset-password")
+//    public ResponseEntity<?> resetPass(@Valid @RequestBody ResetReq req){
+//        authService.resetPassword(req);
+//
+//        return ResponseEntity.ok("Password reset successfully");
+//    }
 }

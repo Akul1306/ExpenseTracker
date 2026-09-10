@@ -2,6 +2,7 @@ package com.project.ExpenseTracker.expense;
 
 import com.project.ExpenseTracker.expense.dto.ExpenseRequest;
 import com.project.ExpenseTracker.expense.dto.ExpenseResponse;
+import com.project.ExpenseTracker.expense.dto.ExpensePatchDto;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
@@ -60,7 +61,7 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseService.deleteExpenseById(id));
     }
 
-    @GetMapping("/admin/all")
+    @GetMapping("/all")
     public ResponseEntity<List<ExpenseResponse>> getAllExpensesForAdmin() {
         return ResponseEntity.ok(expenseService.getAllExpensesForAdmin());
     }
@@ -77,4 +78,12 @@ public class ExpenseController {
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(expenseService.getAllExpenses(page, size));
     }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ExpenseResponse> patchExpense(
+            @PathVariable Long id,
+            @RequestBody ExpensePatchDto patch) throws AccessDeniedException {
+        return ResponseEntity.ok(expenseService.updateExpense(id, patch));
+    }
 }
+//:expense/expense?pae=1&size=5
