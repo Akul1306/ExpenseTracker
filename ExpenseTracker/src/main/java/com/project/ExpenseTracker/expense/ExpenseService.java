@@ -6,6 +6,7 @@ import com.project.ExpenseTracker.expense.dto.ExpenseRequest;
 import com.project.ExpenseTracker.expense.dto.ExpenseResponse;
 import com.project.ExpenseTracker.user.User;
 import com.project.ExpenseTracker.user.UserRepository;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,8 @@ import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +35,7 @@ public class ExpenseService {
         this.userRepo = userRepo;
     }
 
-    public Expense addExpense(ExpenseRequest request){
+    public Expense addExpense(ExpenseRequest request) {
         Expense expense = new Expense();
         expense.setTitle(request.getTitle());
         expense.setDescription(request.getDescription());
@@ -88,6 +91,49 @@ public class ExpenseService {
         return res;
     }
 
+//    public String uploadReceipt(Long expenseId, MultipartFile file) throws AccessDeniedException {
+//        Expense expense = expenseRepo.findById(expenseId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
+//
+//        // ownership check — don't skip this
+//        Long currentUserId = getCurrentUserId();
+//        if (!expense.getUser().getId().equals(currentUserId)) {
+//            throw new AccessDeniedException("Not your expense");
+//        }
+//
+//        // Validation: filename must not contain spaces
+//        String originalFilename = file.getOriginalFilename();
+//        if (originalFilename != null && originalFilename.contains(" ")) {
+//            expenseRepo.delete(expense); // Rollback expense creation
+//            throw new IllegalArgumentException("File name should not contain spaces");
+//        }
+//
+//        try {
+//            String uploadDir = "uploads/receipts/";
+//            Files.createDirectories(Paths.get(uploadDir));
+//
+//            String filename = UUID.randomUUID() + "_" + originalFilename;
+//            Path filePath = Paths.get(uploadDir + filename);
+//            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+//
+//            String fileUrl = "/uploads/receipts/" + filename;
+//            expense.setReceiptUrl(fileUrl);
+//            expenseRepo.save(expense);
+//
+//            return fileUrl;
+//        } catch (Exception e) {
+//            expenseRepo.delete(expense); // Rollback expense creation if storage fails
+//            throw new RuntimeException("Failed to store file", e);
+//        }
+//    }
+//
+//    // ownership check — don't skip this
+//    Long currentUserId = getCurrentUserId();
+//if (!expense.getUser().getId().equals(currentUserId)) {
+//        throw new AccessDeniedException("Not your expense");
+//    }
+
+    // Get original filename
     public String uploadReceipt(Long expenseId, MultipartFile file) throws AccessDeniedException {
         Expense expense = expenseRepo.findById(expenseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
@@ -97,32 +143,60 @@ public class ExpenseService {
         if (!expense.getUser().getId().equals(currentUserId)) {
             throw new AccessDeniedException("Not your expense");
         }
+    String originalFilename = file.getOriginalFilename();
 
-        // Validation: filename must not contain spaces
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename != null && originalFilename.contains(" ")) {
-            expenseRepo.delete(expense); // Rollback expense creation
-            throw new IllegalArgumentException("File name should not contain spaces");
-        }
+if(originalFilename ==null||originalFilename.isBlank())
 
-        try {
-            String uploadDir = "uploads/receipts/";
-            Files.createDirectories(Paths.get(uploadDir));
-
-            String filename = UUID.randomUUID() + "_" + originalFilename;
-            Path filePath = Paths.get(uploadDir + filename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            String fileUrl = "/uploads/receipts/" + filename;
-            expense.setReceiptUrl(fileUrl);
-            expenseRepo.save(expense);
-
-            return fileUrl;
-        } catch (Exception e) {
-            expenseRepo.delete(expense); // Rollback expense creation if storage fails
-            throw new RuntimeException("Failed to store file", e);
-        }
+    {
+        expenseRepo.delete(expense);
+        throw new IllegalArgumentException("Invalid file name");
     }
+
+try
+    {
+        String uploadDir = "uploads/receipts/";
+        Files.createDirectories(Paths.get(uploadDir));
+
+        // Remove any path information from the user-provided filename
+        String cleanFilename = Paths
+                .get(originalFilename)
+                .getFileName()
+                .toString();
+
+        // Extract extension
+        String extension = "";
+
+        int dotIndex = cleanFilename.lastIndexOf('.');
+        if (dotIndex > 0) {
+            extension = cleanFilename.substring(dotIndex);
+        }
+
+        // Generate a completely unique storage filename
+        String storedFilename = UUID.randomUUID() + extension;
+
+        Path filePath = Paths.get(uploadDir, storedFilename);
+
+        Files.copy(
+                file.getInputStream(),
+                filePath,
+                StandardCopyOption.REPLACE_EXISTING
+        );
+
+        String fileUrl = "/uploads/receipts/" + storedFilename;
+
+        expense.setReceiptUrl(fileUrl);
+        expenseRepo.save(expense);
+
+        return fileUrl;
+
+    } catch(
+    Exception e)
+
+    {
+        expenseRepo.delete(expense);
+        throw new RuntimeException("Failed to store file", e);
+    }
+}
 
     public ExpenseResponse getExpenseById(Long id) throws AccessDeniedException {
         Expense expense = expenseRepo.findById(id)
@@ -166,14 +240,68 @@ public class ExpenseService {
         return mapToResponse(expenseRepo.save(expense));
     }
 
-    public Page<ExpenseResponse> getAllExpenses(int page, int size) {
+    public Page<ExpenseResponse> getExpenses(
+            int page,
+            int size,
+            String name,
+            ExpenseCategory category,
+            LocalDate date) {
+
         Pageable pageable = PageRequest.of(
                 page,
                 size,
                 Sort.by("expenseDate").descending()
         );
 
-        Page<Expense> expensePage = expenseRepo.findAll(pageable);
+        Specification<Expense> spec = null;
+
+        if (name != null && !name.isBlank()) {
+            Specification<Expense> nameSpec = (root, query, cb) ->
+                    cb.like(
+                            cb.lower(root.get("user").get("username")),
+                            "%" + name.toLowerCase() + "%"
+                    );
+
+            spec = spec == null ? nameSpec : spec.and(nameSpec);
+        }
+
+        if (category != null) {
+            Specification<Expense> categorySpec = (root, query, cb) ->
+                    cb.equal(root.get("category"), category);
+
+            spec = spec == null ? categorySpec : spec.and(categorySpec);
+        }
+
+        if (date != null) {
+            Date startDate = Date.from(
+                    date.atStartOfDay(ZoneId.systemDefault()).toInstant()
+            );
+
+            Date endDate = Date.from(
+                    date.plusDays(1)
+                            .atStartOfDay(ZoneId.systemDefault())
+                            .toInstant()
+            );
+
+            Specification<Expense> dateSpec = (root, query, cb) ->
+                    cb.and(
+                            cb.greaterThanOrEqualTo(
+                                    root.get("expenseDate"),
+                                    startDate
+                            ),
+                            cb.lessThan(
+                                    root.get("expenseDate"),
+                                    endDate
+                            )
+                    );
+
+            spec = spec == null ? dateSpec : spec.and(dateSpec);
+        }
+
+        Page<Expense> expensePage =
+                spec == null
+                        ? expenseRepo.findAll(pageable)
+                        : expenseRepo.findAll(spec, pageable);
 
         return expensePage.map(this::mapToResponse);
     }

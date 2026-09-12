@@ -9,6 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.time.LocalDate;
+
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -51,13 +57,24 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseService.getExpenseById(id));
     }
 
-    @GetMapping
-    public ResponseEntity<Page<ExpenseResponse>> getExpenses(
+    @GetMapping("/all")
+    public ResponseEntity<Page<ExpenseResponse>> getAllExpenses(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) ExpenseCategory category,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate date) {
 
         return ResponseEntity.ok(
-                expenseService.getExpenses(page, size)
+                expenseService.getExpenses(
+                        page,
+                        size,
+                        name,
+                        category,
+                        date
+                )
         );
     }
 
@@ -66,10 +83,10 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseService.deleteExpenseById(id));
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<ExpenseResponse>> getAllExpensesForAdmin() {
-        return ResponseEntity.ok(expenseService.getAllExpensesForAdmin());
-    }
+//    @GetMapping("/all")
+//    public ResponseEntity<List<ExpenseResponse>> getAllExpensesForAdmin() {
+//        return ResponseEntity.ok(expenseService.getAllExpensesForAdmin());
+//    }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<ExpenseResponse> updateExpenseStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
@@ -81,7 +98,7 @@ public class ExpenseController {
     public ResponseEntity<Page<ExpenseResponse>> getAllExpenses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "3") int size) {
-        return ResponseEntity.ok(expenseService.getAllExpenses(page, size));
+        return ResponseEntity.ok(expenseService.getExpenses(page, size));
     }
 
     @PatchMapping("/{id}")

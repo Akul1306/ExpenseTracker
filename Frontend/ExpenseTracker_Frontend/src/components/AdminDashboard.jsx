@@ -18,6 +18,12 @@ export default function AdminDashboard() {
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
 
+  const [maxDate] = useState(() => {
+    const today = new Date();
+    today.setDate(today.getDate() - 1);
+    return today.toISOString().split("T")[0];
+  });
+
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -29,20 +35,31 @@ export default function AdminDashboard() {
   const fetchExpenses = async () => {
     try {
       setLoading(true);
-      setError("");
 
-      const response = await api.get(
-        `/expense/expense?page=${currentPage - 1}&size=${itemsPerPage}`,
-      );
+      const params = new URLSearchParams();
 
-      console.log("Expenses response:", response.data);
+      params.append("page", String(currentPage - 1));
+      params.append("size", String(itemsPerPage));
+
+      if (selectedEmployee !== "ALL") {
+        params.append("name", selectedEmployee);
+      }
+
+      if (selectedCategory !== "ALL") {
+        params.append("category", selectedCategory);
+      }
+
+      if (selectedDate) {
+        params.append("date", selectedDate);
+      }
+
+      const response = await api.get(`/expense/all?${params.toString()}`);
 
       setExpenses(response.data.content);
       setTotalPages(response.data.totalPages);
       setTotalElements(response.data.totalElements);
     } catch (err) {
-      console.error("Failed to fetch expenses:", err);
-      setError("Failed to fetch expenses.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -50,7 +67,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchExpenses();
-  }, [currentPage]);
+  }, [currentPage, selectedEmployee, selectedCategory, selectedDate]);
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
@@ -70,40 +87,16 @@ export default function AdminDashboard() {
     username.toLowerCase().includes(employeeSearch.toLowerCase()),
   );
 
-  // Filtered expense records
-  const filteredExpenses = expenses.filter((item) => {
-    // Employee filter
-    if (selectedEmployee !== "ALL" && item.username !== selectedEmployee) {
-      return false;
-    }
-    // Category filter
-    if (selectedCategory !== "ALL" && item.category !== selectedCategory) {
-      return false;
-    }
-    // Date filter (compare YYYY-MM-DD)
-    if (selectedDate) {
-      if (!item.expenseDate) return false;
-      const itemDateStr = new Date(item.expenseDate)
-        .toISOString()
-        .split("T")[0];
-      if (itemDateStr !== selectedDate) return false;
-    }
-    return true;
-  });
-
   const startEntry =
     totalElements === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
 
   const endEntry = Math.min(currentPage * itemsPerPage, totalElements);
   // Calculate summary metrics
-  const totalSpend = filteredExpenses.reduce(
-    (sum, item) => sum + item.amount,
-    0,
-  );
-  const pendingCount = filteredExpenses.filter(
+  const totalSpend = expenses.reduce((sum, item) => sum + item.amount, 0);
+  const pendingCount = expenses.filter(
     (item) => item.status === "PENDING",
   ).length;
-  const approvedTotal = filteredExpenses
+  const approvedTotal = expenses
     .filter((item) => item.status === "APPROVED")
     .reduce((sum, item) => sum + item.amount, 0);
 
@@ -176,7 +169,7 @@ export default function AdminDashboard() {
             Total Records
           </div>
           <div className="text-2xl font-extrabold text-indigo-600 mt-2">
-            {filteredExpenses.length} / {expenses.length}
+            {totalElements}
           </div>
         </div>
       </div>
@@ -244,7 +237,10 @@ export default function AdminDashboard() {
             </label>
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
             >
               <option value="ALL">All Categories</option>
@@ -265,14 +261,22 @@ export default function AdminDashboard() {
             <div className="flex gap-2">
               <input
                 type="date"
-                readOnly
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                max={maxDate}
+                onKeyDown={(e) => e.preventDefault()}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
               />
+
               {selectedDate && (
                 <button
-                  onClick={() => setSelectedDate("")}
+                  onClick={() => {
+                    setSelectedDate("");
+                    setCurrentPage(1);
+                  }}
                   className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
                   title="Clear date filter"
                 >
