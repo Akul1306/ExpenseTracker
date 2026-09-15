@@ -9,6 +9,15 @@ public class ExpenseResponse {
 
 
     private Long id;
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
+
     private String title;
     private String description;
     private double amount;
@@ -20,6 +29,7 @@ public class ExpenseResponse {
     private Date updatedAt;
     private Long userId;
     private String username;
+private String remarks;
 
     public ExpenseResponse() {}
 

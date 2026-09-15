@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
+//                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/expense/admin/**", "/expense/*/status").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/user/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

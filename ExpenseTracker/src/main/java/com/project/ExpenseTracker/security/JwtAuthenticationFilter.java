@@ -39,20 +39,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7); // strip "Bearer "
 
         if (jwtService.isTokenValid(token)) {
+
             String username = jwtService.extractUsername(token);
             Long userId = jwtService.extractUserId(token);
             String role = jwtService.extractRole(token);
 
+            System.out.println("========== JWT DEBUG ==========");
+            System.out.println("Username: " + username);
+            System.out.println("User ID: " + userId);
+            System.out.println("Role: " + role);
+            System.out.println("================================");
+
+
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+            System.out.println("Username: " + username);
+            System.out.println("Role from JWT: " + role);
+            System.out.println("Authorities: " + authorities);
+
 
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(username, null, authorities);
             authToken.setDetails(userId);
 
             SecurityContextHolder.getContext().setAuthentication(authToken);
+
         }
+
 
         filterChain.doFilter(request, response);
     }
+
 
 }

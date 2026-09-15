@@ -7,9 +7,11 @@ import com.project.ExpenseTracker.expense.dto.ExpenseResponse;
 import com.project.ExpenseTracker.user.User;
 import com.project.ExpenseTracker.user.UserRepository;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -58,10 +60,10 @@ public class ExpenseService {
     }
 
     private Long getCurrentUserId() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepo.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return user.getId();
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        return (Long) authentication.getDetails();
     }
 
     public List<ExpenseResponse> getExpensesByCategory(ExpenseCategory category) {
@@ -88,50 +90,9 @@ public class ExpenseService {
         res.setUpdatedAt(expense.getUpdatedAt());
         res.setUserId(expense.getUser().getId());
         res.setUsername(expense.getUser().getUsername());
+        res.setRemarks(expense.getRemarks());
         return res;
     }
-
-//    public String uploadReceipt(Long expenseId, MultipartFile file) throws AccessDeniedException {
-//        Expense expense = expenseRepo.findById(expenseId)
-//                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
-//
-//        // ownership check — don't skip this
-//        Long currentUserId = getCurrentUserId();
-//        if (!expense.getUser().getId().equals(currentUserId)) {
-//            throw new AccessDeniedException("Not your expense");
-//        }
-//
-//        // Validation: filename must not contain spaces
-//        String originalFilename = file.getOriginalFilename();
-//        if (originalFilename != null && originalFilename.contains(" ")) {
-//            expenseRepo.delete(expense); // Rollback expense creation
-//            throw new IllegalArgumentException("File name should not contain spaces");
-//        }
-//
-//        try {
-//            String uploadDir = "uploads/receipts/";
-//            Files.createDirectories(Paths.get(uploadDir));
-//
-//            String filename = UUID.randomUUID() + "_" + originalFilename;
-//            Path filePath = Paths.get(uploadDir + filename);
-//            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-//
-//            String fileUrl = "/uploads/receipts/" + filename;
-//            expense.setReceiptUrl(fileUrl);
-//            expenseRepo.save(expense);
-//
-//            return fileUrl;
-//        } catch (Exception e) {
-//            expenseRepo.delete(expense); // Rollback expense creation if storage fails
-//            throw new RuntimeException("Failed to store file", e);
-//        }
-//    }
-//
-//    // ownership check — don't skip this
-//    Long currentUserId = getCurrentUserId();
-//if (!expense.getUser().getId().equals(currentUserId)) {
-//        throw new AccessDeniedException("Not your expense");
-//    }
 
     // Get original filename
     public String uploadReceipt(Long expenseId, MultipartFile file) throws AccessDeniedException {
@@ -334,31 +295,55 @@ try
     }
 
     @Transactional
-    public ExpenseResponse updateExpense(Long id, ExpensePatchDto patch) throws AccessDeniedException {
+    public ExpenseResponse updateExpense(Long id, ExpensePatchDto patch)
+            throws AccessDeniedException {
+
         Expense expense = expenseRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
 
         Long userId = getCurrentUserId();
-        if (!expense.getId().equals(userId)) {
+
+
+//        // Make sure the logged-in user owns this expense
+        if (!expense.getUser().getId().equals(userId)) {
             throw new AccessDeniedException("Not your expense");
         }
 
         if (patch.getTitle() != null) {
             expense.setTitle(patch.getTitle());
         }
+
         if (patch.getDescription() != null) {
             expense.setDescription(patch.getDescription());
         }
+
         if (patch.getCategory() != null) {
             expense.setCategory(patch.getCategory());
         }
+
         if (patch.getDate() != null) {
             expense.setUpdatedAt(patch.getDate());
         }
+
         if (patch.getAmount() != null) {
             expense.setAmount(patch.getAmount());
         }
 
         return mapToResponse(expenseRepo.save(expense));
     }
+
+    public ExpenseResponse addRemarks(Long expenseId, String remarks) {
+
+        Expense expense = expenseRepo.findById(expenseId)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+
+        expense.setRemarks(remarks);
+
+        Expense savedExpense = expenseRepo.save(expense);
+
+        return mapToResponse(savedExpense);
+    }
+
+
+
 }

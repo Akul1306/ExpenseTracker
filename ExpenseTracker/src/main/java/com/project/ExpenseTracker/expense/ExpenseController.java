@@ -3,6 +3,7 @@ package com.project.ExpenseTracker.expense;
 import com.project.ExpenseTracker.expense.dto.ExpenseRequest;
 import com.project.ExpenseTracker.expense.dto.ExpenseResponse;
 import com.project.ExpenseTracker.expense.dto.ExpensePatchDto;
+import com.project.ExpenseTracker.expense.dto.RemarksRequest;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.data.domain.Page;
@@ -57,7 +58,7 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseService.getExpenseById(id));
     }
 
-    @GetMapping("/all")
+    @GetMapping("/admin/all")
     public ResponseEntity<Page<ExpenseResponse>> getAllExpenses(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -88,7 +89,7 @@ public class ExpenseController {
 //        return ResponseEntity.ok(expenseService.getAllExpensesForAdmin());
 //    }
 
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/admin/{id}/status")
     public ResponseEntity<ExpenseResponse> updateExpenseStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
         ExpenseStatus status = ExpenseStatus.valueOf(body.get("status"));
         return ResponseEntity.ok(expenseService.updateExpenseStatus(id, status));
@@ -106,6 +107,25 @@ public class ExpenseController {
             @PathVariable Long id,
             @RequestBody ExpensePatchDto patch) throws AccessDeniedException {
         return ResponseEntity.ok(expenseService.updateExpense(id, patch));
+
     }
+    @PostMapping("/admin/remarks")
+    public ResponseEntity<ExpenseResponse> addRemarks(
+            @RequestParam Long expenseId,
+            @RequestBody RemarksRequest request) {
+
+        System.out.println("========== REMARKS CONTROLLER HIT ==========");
+        System.out.println("Expense ID: " + expenseId);
+        System.out.println("Remarks: " + request.getRemarks());
+
+        ExpenseResponse response =
+                expenseService.addRemarks(
+                        expenseId,
+                        request.getRemarks()
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
 }
 //:expense/expense?pae=1&size=5

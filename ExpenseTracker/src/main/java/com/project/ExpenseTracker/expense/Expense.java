@@ -41,6 +41,9 @@ public class Expense {
     @Column(name = "receipt_url")
     private String receiptUrl;
 
+    @Column(name = "Remarks")
+    private String remarks;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -131,6 +134,14 @@ public class Expense {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 
 
