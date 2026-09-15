@@ -140,6 +140,16 @@ public class ExpenseService {
 
         // ownership check — don't skip this
         Long currentUserId = getCurrentUserId();
+        System.out.println("========== RECEIPT DEBUG ==========");
+        System.out.println("Receipt expense ID: " + expenseId);
+        System.out.println("Expense owner ID: " + expense.getUser().getId());
+        System.out.println("Current user ID: " + currentUserId);
+        System.out.println("==================================");
+
+        if (!expense.getUser().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("Not your expense");
+        }
+
         if (!expense.getUser().getId().equals(currentUserId)) {
             throw new AccessDeniedException("Not your expense");
         }

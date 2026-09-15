@@ -28,7 +28,7 @@ export default function ExpenseForm() {
   const fetchExpenses = async () => {
     try {
       const response = await api.get(
-        `/expense?page=${currentPage - 1}&size=${itemsPerPage}`,
+        `/expense/expense?page=${currentPage - 1}&size=${itemsPerPage}`,
       );
 
       console.log("API response:", response.data);
@@ -58,14 +58,6 @@ export default function ExpenseForm() {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
-      if (selectedFile.name.includes(" ")) {
-        setError(
-          "File name should not contain spaces. Please rename your file (e.g., receipt_1.pdf).",
-        );
-        e.target.value = "";
-        setFile(null);
-        return;
-      }
       setError("");
       setFile(selectedFile);
     } else {
@@ -74,16 +66,14 @@ export default function ExpenseForm() {
   };
 
   const handleSubmit = async (e) => {
+    console.log("🔥 ADD EXPENSE CLICKED");
+
+    e.preventDefault();
+
+    // rest of your code
     e.preventDefault();
     setError("");
     setSuccess("");
-
-    if (file && file.name.includes(" ")) {
-      setError(
-        "File name should not contain spaces. Please rename your file (e.g., receipt_1.pdf).",
-      );
-      return;
-    }
 
     const payload = {
       title: formData.title,
@@ -95,19 +85,23 @@ export default function ExpenseForm() {
 
     try {
       // 1. Create the expense
+      console.log("SUBMIT CLICKED");
+
       const response = await api.post("/expense", payload);
+
+      console.log("🔥 CREATE API RESPONSE:", response.data);
+
       const createdExpenseId = response.data?.id;
+
+      console.log("🔥 CREATED ID:", createdExpenseId);
 
       // 2. Upload receipt if file is selected
       if (file && createdExpenseId) {
         try {
           const fileFormData = new FormData();
           fileFormData.append("file", file);
-          await api.post(`/expense/${createdExpenseId}/receipt`, fileFormData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
+
+          await api.post(`/expense/${createdExpenseId}/receipt`, fileFormData);
         } catch (uploadErr) {
           // Auto-rollback: delete the created expense if receipt upload fails
           try {
@@ -299,17 +293,6 @@ export default function ExpenseForm() {
               accept="image/*,.pdf"
               className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-300 rounded-lg"
             />
-            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 font-medium">
-              <span>⚠️</span> Note: File name must not contain spaces (e.g.,{" "}
-              <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono">
-                receipt_1.pdf
-              </code>{" "}
-              or{" "}
-              <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono">
-                proof.png
-              </code>
-              ).
-            </p>
           </div>
           <div className="md:col-span-2">
             <label className="block text-slate-700 text-sm font-semibold mb-1">
