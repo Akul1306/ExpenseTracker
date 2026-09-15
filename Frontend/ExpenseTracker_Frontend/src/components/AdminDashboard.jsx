@@ -53,7 +53,7 @@ export default function AdminDashboard() {
         params.append("date", selectedDate);
       }
 
-      const response = await api.get(`/expense/all?${params.toString()}`);
+      const response = await api.get(`/expense/admin/all?${params.toString()}`);
 
       setExpenses(response.data.content);
       setTotalPages(response.data.totalPages);
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      await api.patch(`/expense/${id}/status`, { status: newStatus });
+      await api.patch(`/expense/admin/${id}/status`, { status: newStatus });
       fetchExpenses();
     } catch (err) {
       console.error("Failed to update status:", err);

@@ -10,6 +10,7 @@ export default function ExpenseForm() {
     category: "FOOD",
     date: "",
   });
+  const [editingExpenseId, setEditingExpenseId] = useState(null);
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -64,10 +65,28 @@ export default function ExpenseForm() {
       setFile(null);
     }
   };
+  const handleEdit = (expense) => {
+    setEditingExpenseId(expense.id);
+
+    setFormData({
+      title: expense.title || "",
+      description: expense.description || "",
+      amount: expense.amount ?? "",
+      category: expense.category || "FOOD",
+      date: expense.expenseDate ? expense.expenseDate.substring(0, 10) : "",
+    });
+
+    setFile(null);
+    setError("");
+    setSuccess("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
 
   const handleSubmit = async (e) => {
-    console.log("🔥 ADD EXPENSE CLICKED");
-
     e.preventDefault();
 
     // rest of your code
@@ -84,18 +103,36 @@ export default function ExpenseForm() {
     };
 
     try {
-      // 1. Create the expense
-      console.log("SUBMIT CLICKED");
+      if (editingExpenseId) {
+        // EDIT EXISTING EXPENSE
+        await api.patch(`/expense/${editingExpenseId}`, payload);
 
+        setSuccess("Expense updated successfully!");
+
+        setEditingExpenseId(null);
+        setFormData({
+          title: "",
+          description: "",
+          amount: "",
+          category: "FOOD",
+          date: "",
+        });
+
+        setFile(null);
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+
+        fetchExpenses();
+        return;
+      }
+
+      // ADD NEW EXPENSE
       const response = await api.post("/expense", payload);
-
-      console.log("🔥 CREATE API RESPONSE:", response.data);
 
       const createdExpenseId = response.data?.id;
 
-      console.log("🔥 CREATED ID:", createdExpenseId);
-
-      // 2. Upload receipt if file is selected
       if (file && createdExpenseId) {
         try {
           const fileFormData = new FormData();
@@ -103,23 +140,26 @@ export default function ExpenseForm() {
 
           await api.post(`/expense/${createdExpenseId}/receipt`, fileFormData);
         } catch (uploadErr) {
-          // Auto-rollback: delete the created expense if receipt upload fails
           try {
             await api.delete(`/expense/${createdExpenseId}`);
           } catch (delErr) {
             console.error("Rollback failed:", delErr);
           }
+
           const uploadMsg = uploadErr.response?.data;
+
           const finalMsg =
             typeof uploadMsg === "string"
               ? uploadMsg
               : "Receipt file upload failed. The expense claim was rolled back.";
+
           setError(finalMsg);
           return;
         }
       }
 
       setSuccess("Expense added successfully!");
+
       setFormData({
         title: "",
         description: "",
@@ -127,17 +167,21 @@ export default function ExpenseForm() {
         category: "FOOD",
         date: "",
       });
+
       setFile(null);
+
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+
       fetchExpenses();
     } catch (err) {
       const serverError = err.response?.data;
+
       if (typeof serverError === "object" && serverError !== null) {
         setError(Object.values(serverError).join(", "));
       } else {
-        setError(serverError || "Failed to add expense. Check details.");
+        setError(serverError || "Failed to save expense. Check details.");
       }
     }
   };
@@ -202,7 +246,7 @@ export default function ExpenseForm() {
       {/* Add Expense Section */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
         <h2 className="text-xl font-bold mb-4 text-slate-800 flex items-center gap-2">
-          Submit New Expense Claim
+          {editingExpenseId ? `Edit Expense` : "Submit New Expense Claim"}
         </h2>
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm">
@@ -312,7 +356,7 @@ export default function ExpenseForm() {
               type="submit"
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-200 shadow"
             >
-              Add Expense
+              {editingExpenseId ? "Update Expense" : "Add Expense"}
             </button>
           </div>
         </form>
@@ -437,12 +481,26 @@ export default function ExpenseForm() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleDelete(expense.id)}
-                        className="text-red-600 hover:text-red-900 font-semibold"
-                      >
-                        Delete
-                      </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {expense.status !== "APPROVED" &&
+                          expense.status !== "REJECTED" && (
+                            <div className="flex justify-end gap-3">
+                              <button
+                                onClick={() => handleEdit(expense)}
+                                className="text-blue-600 hover:text-blue-900 font-semibold"
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                onClick={() => handleDelete(expense.id)}
+                                className="text-red-600 hover:text-red-900 font-semibold"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                      </td>
                     </td>
                   </tr>
                 ))}
