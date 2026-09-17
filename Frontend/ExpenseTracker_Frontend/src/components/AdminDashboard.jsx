@@ -18,6 +18,10 @@ export default function AdminDashboard() {
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
 
+  const [remarkExpenseId, setRemarkExpenseId] = useState(null);
+  const [remarkAction, setRemarkAction] = useState(null);
+  const [remarks, setRemarks] = useState("");
+
   const [maxDate] = useState(() => {
     const today = new Date();
     today.setDate(today.getDate() - 1);
@@ -76,6 +80,44 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error("Failed to update status:", err);
       alert("Failed to update status.");
+    }
+  };
+
+  const handleRemarkClick = (expenseId, action) => {
+    setRemarkExpenseId(expenseId);
+    setRemarkAction(action);
+    setRemarks("");
+  };
+
+  const handleSubmitRemark = async () => {
+    if (!remarkExpenseId || !remarkAction) return;
+
+    if (!remarks.trim()) {
+      alert("Please enter remarks.");
+      return;
+    }
+
+    try {
+      // First update status
+      await api.patch(`/expense/admin/${remarkExpenseId}/status`, {
+        status: remarkAction,
+      });
+
+      // Then save remarks
+      await api.post(`/expense/admin/remarks?expenseId=${remarkExpenseId}`, {
+        remarks: remarks.trim(),
+      });
+
+      // Reset
+      setRemarkExpenseId(null);
+      setRemarkAction(null);
+      setRemarks("");
+
+      // Refresh expenses
+      fetchExpenses();
+    } catch (err) {
+      console.error("Failed to update expense:", err);
+      alert("Failed to update expense.");
     }
   };
 
@@ -399,24 +441,72 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                       {expense.status === "PENDING" ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(expense.id, "APPROVED")
-                            }
-                            className="px-2.5 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded transition shadow-sm"
-                          >
-                            ✓ Approve
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleStatusUpdate(expense.id, "REJECTED")
-                            }
-                            className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition shadow-sm"
-                          >
-                            ✕ Reject
-                          </button>
-                        </div>
+                        remarkExpenseId === expense.id ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <textarea
+                              value={remarks}
+                              onChange={(e) => setRemarks(e.target.value)}
+                              placeholder={`Enter remarks for ${
+                                remarkAction === "APPROVED"
+                                  ? "approval"
+                                  : "rejection"
+                              }...`}
+                              rows={3}
+                              className="w-64 px-3 py-2 text-sm border border-slate-300 rounded-lg
+                     focus:outline-none focus:ring-2 focus:ring-indigo-500
+                     resize-none"
+                            />
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={handleSubmitRemark}
+                                className={`px-3 py-1.5 text-white text-xs font-semibold rounded-lg shadow-sm ${
+                                  remarkAction === "APPROVED"
+                                    ? "bg-green-600 hover:bg-green-700"
+                                    : "bg-red-600 hover:bg-red-700"
+                                }`}
+                              >
+                                {remarkAction === "APPROVED"
+                                  ? "✓ Confirm Approve"
+                                  : "✕ Confirm Reject"}
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setRemarkExpenseId(null);
+                                  setRemarkAction(null);
+                                  setRemarks("");
+                                }}
+                                className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300
+                       text-slate-700 text-xs font-semibold rounded-lg"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() =>
+                                handleRemarkClick(expense.id, "APPROVED")
+                              }
+                              className="px-2.5 py-1 bg-green-600 hover:bg-green-700
+                     text-white text-xs font-semibold rounded transition shadow-sm"
+                            >
+                              ✓ Approve
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                handleRemarkClick(expense.id, "REJECTED")
+                              }
+                              className="px-2.5 py-1 bg-red-600 hover:bg-red-700
+                     text-white text-xs font-semibold rounded transition shadow-sm"
+                            >
+                              ✕ Reject
+                            </button>
+                          </div>
+                        )
                       ) : (
                         <span className="text-xs text-slate-400">
                           {expense.status === "APPROVED"

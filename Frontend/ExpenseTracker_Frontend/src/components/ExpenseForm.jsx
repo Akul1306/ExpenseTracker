@@ -429,7 +429,7 @@ export default function ExpenseForm() {
                     Status
                   </th>
                   <th className="px-6 py-3.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">
-                    Actions
+                    Actions / Remarks
                   </th>
                 </tr>
               </thead>
@@ -481,25 +481,35 @@ export default function ExpenseForm() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {expense.status !== "APPROVED" &&
-                          expense.status !== "REJECTED" && (
-                            <div className="flex justify-end gap-3">
-                              <button
-                                onClick={() => handleEdit(expense)}
-                                className="text-blue-600 hover:text-blue-900 font-semibold"
-                              >
-                                Edit
-                              </button>
-
-                              <button
-                                onClick={() => handleDelete(expense.id)}
-                                className="text-red-600 hover:text-red-900 font-semibold"
-                              >
-                                Delete
-                              </button>
+                      <td className="px-6 py-4 text-right text-sm font-medium">
+                        {expense.status === "APPROVED" ||
+                        expense.status === "REJECTED" ? (
+                          <div className="max-w-xs ml-auto text-right">
+                            <div className="text-xs font-semibold text-slate-500 mb-1">
+                              Admin Remark
                             </div>
-                          )}
+
+                            <div className="text-sm text-slate-700 whitespace-normal break-words">
+                              {expense.remarks || "No remarks provided"}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => handleEdit(expense)}
+                              className="text-blue-600 hover:text-blue-900 font-semibold"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              onClick={() => handleDelete(expense.id)}
+                              className="text-red-600 hover:text-red-900 font-semibold"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </td>
                   </tr>
