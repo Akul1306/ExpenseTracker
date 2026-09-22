@@ -111,9 +111,6 @@ public class ExpenseService {
             throw new AccessDeniedException("Not your expense");
         }
 
-        if (!expense.getUser().getId().equals(currentUserId)) {
-            throw new AccessDeniedException("Not your expense");
-        }
     String originalFilename = file.getOriginalFilename();
 
 if(originalFilename ==null||originalFilename.isBlank())

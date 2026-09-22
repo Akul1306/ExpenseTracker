@@ -14,7 +14,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Signup from "./components/SignUp";
 import Navbar from "./components/Navbar";
-import ExpenseForm from "./components/ExpenseForm";
+import ExpensePage from "./features/expense/pages/ExpensePage";
 import AdminDashboard from "./components/AdminDashboard";
 import ManageEmployees from "./components/ManageEmployees";
 
@@ -26,7 +26,7 @@ function parseJwt(token) {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(""),
+        .join("")
     );
     return JSON.parse(jsonPayload);
   } catch (e) {
@@ -139,7 +139,7 @@ function App() {
               path="/expense"
               element={
                 userInfo.role === "EMPLOYEE" ? (
-                  <ExpenseForm />
+                  <ExpensePage />
                 ) : (
                   <Navigate to="/dashboard" replace />
                 )
