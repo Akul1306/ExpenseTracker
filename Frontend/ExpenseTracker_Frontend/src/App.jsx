@@ -11,11 +11,11 @@ import "./App.css";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import Login from "./components/Login";
-import Signup from "./components/SignUp";
+import Login from "./features/auth/pages/AuthPage";
+import Signup from "./features/auth/pages/AuthPage";
 import Navbar from "./components/Navbar";
 import ExpensePage from "./features/expense/pages/ExpensePage";
-import AdminDashboard from "./components/AdminDashboard";
+import AdminDashboard from "./features/admin/pages/AdminDashboard";
 import ManageEmployees from "./components/ManageEmployees";
 
 function parseJwt(token) {
@@ -26,7 +26,7 @@ function parseJwt(token) {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (e) {
