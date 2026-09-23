@@ -7,6 +7,7 @@ import com.project.ExpenseTracker.expense.dto.ExpenseResponse;
 import com.project.ExpenseTracker.user.User;
 import com.project.ExpenseTracker.user.UserRepository;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -37,27 +39,6 @@ public class ExpenseService {
         this.userRepo = userRepo;
     }
 
-    public Expense addExpense(ExpenseRequest request) {
-        Expense expense = new Expense();
-        expense.setTitle(request.getTitle());
-        expense.setDescription(request.getDescription());
-        expense.setAmount(request.getAmount());
-        expense.setExpenseDate(request.getExpenseDate());
-        expense.setCategory(request.getCategory());
-        expense.setCreatedAt(new Date());
-        expense.setUpdatedAt(new Date());
-        String username = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
-
-        User user = userRepo.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        expense.setUser(user);
-
-        return expenseRepo.save(expense);
-    }
 
     private Long getCurrentUserId() {
         Authentication authentication =
@@ -76,6 +57,7 @@ public class ExpenseService {
                 .toList();
     }
 
+<<<<<<< HEAD
     private ExpenseResponse mapToResponse(Expense expense) {
         ExpenseResponse res = new ExpenseResponse();
         res.setId(expense.getId());
@@ -166,6 +148,8 @@ try
     }
 }
 
+=======
+>>>>>>> c1925d3 (expense)
     public ExpenseResponse getExpenseById(Long id) throws AccessDeniedException {
         Expense expense = expenseRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
@@ -178,34 +162,21 @@ try
         return mapToResponse(expense);
     }
 
-    public List<ExpenseResponse> getAllExpenses() {
+    //users all expenses
+    public Page<ExpenseResponse> getExpenses(int page, int size) {
+
         Long userId = getCurrentUserId();
-        List<Expense> expenses = expenseRepo.findByUserId(userId);
-        return expenses.stream().map(this::mapToResponse).toList();
-    }
 
-    public long deleteExpenseById(Long id) throws AccessDeniedException {
-        Long userId = getCurrentUserId();
-        if (!expenseRepo.existsById(id)) {
-            throw new ResourceNotFoundException("Expense not found");
-        }
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("expenseDate").descending()
+        );
 
-        expenseRepo.deleteById(id);
+        Page<Expense> expenses =
+                expenseRepo.findByUserId(userId, pageable);
 
-        return id;
-    }
-
-    public List<ExpenseResponse> getAllExpensesForAdmin() {
-        List<Expense> expenses = expenseRepo.findAll();
-        return expenses.stream().map(this::mapToResponse).toList();
-    }
-
-    public ExpenseResponse updateExpenseStatus(Long id, ExpenseStatus status) {
-        Expense expense = expenseRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
-        expense.setStatus(status);
-        expense.setUpdatedAt(new Date());
-        return mapToResponse(expenseRepo.save(expense));
+        return expenses.map(this::mapToResponse);
     }
 
     public Page<ExpenseResponse> getExpenses(
@@ -274,37 +245,181 @@ try
         return expensePage.map(this::mapToResponse);
     }
 
-    //users all expenses
-    public Page<ExpenseResponse> getExpenses(int page, int size) {
+    public Expense addExpense(ExpenseRequest request) {
+        Expense expense = new Expense();
+        expense.setTitle(request.getTitle());
+        expense.setDescription(request.getDescription());
+        expense.setAmount(request.getAmount());
+        expense.setExpenseDate(request.getExpenseDate());
+        expense.setCategory(request.getCategory());
+        expense.setCreatedAt(new Date());
+        expense.setUpdatedAt(new Date());
+        String username = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
 
-        Long userId = getCurrentUserId();
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                Sort.by("expenseDate").descending()
+        expense.setUser(user);
+
+        return expenseRepo.save(expense);
+    }
+
+    public ExpenseResponse addRemarks(Long expenseId, String remarks) {
+
+        Expense expense = expenseRepo.findById(expenseId)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+
+        expense.setRemarks(remarks);
+
+        Expense savedExpense = expenseRepo.save(expense);
+
+        return mapToResponse(savedExpense);
+    }
+
+    private ExpenseResponse mapToResponse(Expense expense) {
+        ExpenseResponse res = new ExpenseResponse();
+        res.setId(expense.getId());
+        res.setTitle(expense.getTitle());
+        res.setDescription(expense.getDescription());
+        res.setAmount(expense.getAmount());
+        res.setExpenseDate(expense.getExpenseDate());
+        res.setCategory(expense.getCategory());
+        res.setStatus(expense.getStatus());
+        res.setReceiptUrl(expense.getReceiptUrl());
+        res.setCreatedAt(expense.getCreatedAt());
+        res.setUpdatedAt(expense.getUpdatedAt());
+        res.setUserId(expense.getUser().getId());
+        res.setUsername(expense.getUser().getUsername());
+        res.setRemarks(expense.getRemarks());
+        return res;
+    }
+
+    // Get original filename
+    public String uploadReceipt(Long expenseId, MultipartFile file) throws AccessDeniedException {
+        Expense expense = expenseRepo.findById(expenseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
+
+        // ownership check — don't skip this
+        Long currentUserId = getCurrentUserId();
+//        System.out.println("========== RECEIPT DEBUG ==========");
+//        System.out.println("Receipt expense ID: " + expenseId);
+//        System.out.println("Expense owner ID: " + expense.getUser().getId());
+//        System.out.println("Current user ID: " + currentUserId);
+//        System.out.println("==================================");
+
+        if (!expense.getUser().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("Not your expense");
+        }
+
+        if (!expense.getUser().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("Not your expense");
+        }
+    String originalFilename = file.getOriginalFilename();
+
+if(originalFilename ==null||originalFilename.isBlank())
+
+    {
+        expenseRepo.delete(expense);
+        throw new IllegalArgumentException("Invalid file name");
+    }
+
+try
+    {
+        String uploadDir = "uploads/receipts/";
+        Files.createDirectories(Paths.get(uploadDir));
+
+        // Remove any path information from the user-provided filename
+        String cleanFilename = Paths
+                .get(originalFilename)
+                .getFileName()
+                .toString();
+
+        // Extract extension
+        String extension = "";
+
+        int dotIndex = cleanFilename.lastIndexOf('.');
+        if (dotIndex > 0) {
+            extension = cleanFilename.substring(dotIndex);
+        }
+
+        // Generate a completely unique storage filename
+        String storedFilename = UUID.randomUUID() + extension;
+
+        Path filePath = Paths.get(uploadDir, storedFilename);
+
+        Files.copy(
+                file.getInputStream(),
+                filePath,
+                StandardCopyOption.REPLACE_EXISTING
         );
 
-        Page<Expense> expenses =
-                expenseRepo.findByUserId(userId, pageable);
+        String fileUrl = "/uploads/receipts/" + storedFilename;
 
-        return expenses.map(this::mapToResponse);
+        expense.setReceiptUrl(fileUrl);
+        expenseRepo.save(expense);
+
+        return fileUrl;
+
+    } catch(
+    Exception e)
+
+    {
+        expenseRepo.delete(expense);
+        throw new RuntimeException("Failed to store file", e);
+    }
+}
+
+    public List<ExpenseResponse> getAllExpenses() {
+        Long userId = getCurrentUserId();
+        List<Expense> expenses = expenseRepo.findByUserId(userId);
+        return expenses.stream().map(this::mapToResponse).toList();
+    }
+
+    public List<ExpenseResponse> getAllExpensesForAdmin() {
+        List<Expense> expenses = expenseRepo.findAll();
+        return expenses.stream().map(this::mapToResponse).toList();
+    }
+
+    public ExpenseResponse updateExpenseStatus(Long id, ExpenseStatus status) {
+        Expense expense = expenseRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
+        expense.setStatus(status);
+        expense.setUpdatedAt(new Date());
+        return mapToResponse(expenseRepo.save(expense));
     }
 
     @Transactional
     public ExpenseResponse updateExpense(Long id, ExpensePatchDto patch)
             throws AccessDeniedException {
 
+        // 1. Fetch the existing expense
         Expense expense = expenseRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
 
+        // 2. Get current logged-in user
         Long userId = getCurrentUserId();
 
-
-//        // Make sure the logged-in user owns this expense
+        // 3. Make sure the logged-in user owns this expense
         if (!expense.getUser().getId().equals(userId)) {
             throw new AccessDeniedException("Not your expense");
         }
+
+        // 4. Dynamic State Check:
+        // If expense is already APPROVED or REJECTED, don't allow modification
+        if (expense.getStatus() == ExpenseStatus.APPROVED ||
+                expense.getStatus() == ExpenseStatus.REJECTED) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot modify an expense that has already been "
+                            + expense.getStatus().toString().toLowerCase()
+            );
+        }
+
+        // 5. If status is still PENDING, allow the update
 
         if (patch.getTitle() != null) {
             expense.setTitle(patch.getTitle());
@@ -326,21 +441,19 @@ try
             expense.setAmount(patch.getAmount());
         }
 
+        // 6. Save and return
         return mapToResponse(expenseRepo.save(expense));
     }
 
-    public ExpenseResponse addRemarks(Long expenseId, String remarks) {
+    public long deleteExpenseById(Long id) throws AccessDeniedException {
+        Long userId = getCurrentUserId();
+        if (!expenseRepo.existsById(id)) {
+            throw new ResourceNotFoundException("Expense not found");
+        }
 
-        Expense expense = expenseRepo.findById(expenseId)
-                .orElseThrow(() -> new RuntimeException("Expense not found"));
+        expenseRepo.deleteById(id);
 
-        expense.setRemarks(remarks);
-
-        Expense savedExpense = expenseRepo.save(expense);
-
-        return mapToResponse(savedExpense);
+        return id;
     }
-
-
 
 }

@@ -44,11 +44,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long userId = jwtService.extractUserId(token);
             String role = jwtService.extractRole(token);
 
-            System.out.println("========== JWT DEBUG ==========");
-            System.out.println("Username: " + username);
-            System.out.println("User ID: " + userId);
-            System.out.println("Role: " + role);
-            System.out.println("================================");
 
 
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
