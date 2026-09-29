@@ -8,11 +8,11 @@ export default function Navbar({ username, userRole, onLogout }) {
       <div className="max-w-7xl mx-auto px-6 py-3.5 flex justify-between items-center gap-4">
         {/* Brand Logo */}
         <div className="flex items-center gap-3">
-          <div>
-            <span className="text-2xl font-extrabold text-slate-900 tracking-tight">
+          <Link to={userRole === "ADMIN" ? "/dashboard" : "/expense"}>
+            <span className="text-2xl font-extrabold text-slate-900 tracking-tight hover:text-blue-600 transition">
               ExpenseTracker
             </span>
-          </div>
+          </Link>
         </div>
 
         {/* User Info & Account Dropdown */}
@@ -49,6 +49,15 @@ export default function Navbar({ username, userRole, onLogout }) {
           {/* Dropdown Menu */}
           {isDropdownOpen && (
             <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-50">
+              {/* My Profile */}
+              <Link
+                to="/profile"
+                onClick={() => setIsDropdownOpen(false)}
+                className="block w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition"
+              >
+                My Profile
+              </Link>
+
               {/* Admin Only */}
               {userRole === "ADMIN" && (
                 <Link
