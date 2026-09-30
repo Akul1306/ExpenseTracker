@@ -9,8 +9,8 @@ RUN curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/bi
 ENV MAVEN_HOME=/opt/maven
 ENV PATH=$PATH:$MAVEN_HOME/bin
 
-# 2. Node.js installation via official pre-compiled binary tarball
-ARG NODE_VERSION=18.19.0
+# 2. Node.js installation (Upgraded to Node 20 for modern Vite/Rollup support)
+ARG NODE_VERSION=20.11.0
 RUN curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz | tar -xz -C /opt \
     && ln -s /opt/node-v${NODE_VERSION}-linux-x64 /opt/node
 ENV NODE_HOME=/opt/node
@@ -21,5 +21,3 @@ RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-26.
     && mv /tmp/docker/docker /usr/local/bin/docker \
     && chmod +x /usr/local/bin/docker \
     && rm -rf /tmp/docker
-
-# Keep running as root to effortlessly access the docker socket
