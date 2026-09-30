@@ -10,7 +10,7 @@ pipeline {
 
         stage('Build Backend (Maven)') {
             steps {
-                dir('backend') {
+                dir('ExpenseTracker') {
                     // Assuming a Maven project (pom.xml)
                     sh 'mvn clean package -DskipTests'
                 }
@@ -19,7 +19,7 @@ pipeline {
 
         stage('Build Frontend (Node/npm)') {
             steps {
-                dir('frontend') {
+                dir('Frontend') {
                     sh 'npm install'
                     sh 'npm run build'
                 }
