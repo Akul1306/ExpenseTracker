@@ -57,7 +57,7 @@ public class ExpenseService {
                 .toList();
     }
 
-<<<<<<< HEAD
+
     private ExpenseResponse mapToResponse(Expense expense) {
         ExpenseResponse res = new ExpenseResponse();
         res.setId(expense.getId());
@@ -148,8 +148,6 @@ try
     }
 }
 
-=======
->>>>>>> c1925d3 (expense)
     public ExpenseResponse getExpenseById(Long id) throws AccessDeniedException {
         Expense expense = expenseRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
@@ -278,99 +276,6 @@ try
 
         return mapToResponse(savedExpense);
     }
-
-    private ExpenseResponse mapToResponse(Expense expense) {
-        ExpenseResponse res = new ExpenseResponse();
-        res.setId(expense.getId());
-        res.setTitle(expense.getTitle());
-        res.setDescription(expense.getDescription());
-        res.setAmount(expense.getAmount());
-        res.setExpenseDate(expense.getExpenseDate());
-        res.setCategory(expense.getCategory());
-        res.setStatus(expense.getStatus());
-        res.setReceiptUrl(expense.getReceiptUrl());
-        res.setCreatedAt(expense.getCreatedAt());
-        res.setUpdatedAt(expense.getUpdatedAt());
-        res.setUserId(expense.getUser().getId());
-        res.setUsername(expense.getUser().getUsername());
-        res.setRemarks(expense.getRemarks());
-        return res;
-    }
-
-    // Get original filename
-    public String uploadReceipt(Long expenseId, MultipartFile file) throws AccessDeniedException {
-        Expense expense = expenseRepo.findById(expenseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
-
-        // ownership check — don't skip this
-        Long currentUserId = getCurrentUserId();
-//        System.out.println("========== RECEIPT DEBUG ==========");
-//        System.out.println("Receipt expense ID: " + expenseId);
-//        System.out.println("Expense owner ID: " + expense.getUser().getId());
-//        System.out.println("Current user ID: " + currentUserId);
-//        System.out.println("==================================");
-
-        if (!expense.getUser().getId().equals(currentUserId)) {
-            throw new AccessDeniedException("Not your expense");
-        }
-
-        if (!expense.getUser().getId().equals(currentUserId)) {
-            throw new AccessDeniedException("Not your expense");
-        }
-    String originalFilename = file.getOriginalFilename();
-
-if(originalFilename ==null||originalFilename.isBlank())
-
-    {
-        expenseRepo.delete(expense);
-        throw new IllegalArgumentException("Invalid file name");
-    }
-
-try
-    {
-        String uploadDir = "uploads/receipts/";
-        Files.createDirectories(Paths.get(uploadDir));
-
-        // Remove any path information from the user-provided filename
-        String cleanFilename = Paths
-                .get(originalFilename)
-                .getFileName()
-                .toString();
-
-        // Extract extension
-        String extension = "";
-
-        int dotIndex = cleanFilename.lastIndexOf('.');
-        if (dotIndex > 0) {
-            extension = cleanFilename.substring(dotIndex);
-        }
-
-        // Generate a completely unique storage filename
-        String storedFilename = UUID.randomUUID() + extension;
-
-        Path filePath = Paths.get(uploadDir, storedFilename);
-
-        Files.copy(
-                file.getInputStream(),
-                filePath,
-                StandardCopyOption.REPLACE_EXISTING
-        );
-
-        String fileUrl = "/uploads/receipts/" + storedFilename;
-
-        expense.setReceiptUrl(fileUrl);
-        expenseRepo.save(expense);
-
-        return fileUrl;
-
-    } catch(
-    Exception e)
-
-    {
-        expenseRepo.delete(expense);
-        throw new RuntimeException("Failed to store file", e);
-    }
-}
 
     public List<ExpenseResponse> getAllExpenses() {
         Long userId = getCurrentUserId();
