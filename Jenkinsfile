@@ -21,7 +21,7 @@ pipeline {
             steps {
                 dir('Frontend') {
                     sh 'npm install'
-                    sh 'npm run dev'
+                    sh 'npm run build'
                 }
             }
         }
