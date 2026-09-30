@@ -19,7 +19,7 @@ pipeline {
 
         stage('Build Frontend (Node/npm)') {
             steps {
-                dir('frontend') {
+                dir('Frontend') {
                     sh 'pwd'
                     sh 'ls -la' // This will list all files in the console output, including package.json!
                     sh 'npm install'
