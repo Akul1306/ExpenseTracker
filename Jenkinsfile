@@ -23,7 +23,7 @@ pipeline {
                     sh 'pwd'
                     sh 'ls -la' // This will list all files in the console output, including package.json!
                     sh 'npm install'
-                    sh 'npm run build'
+                    sh 'npm run dev'
                 }
             }
         }
